@@ -268,7 +268,7 @@ export default function AdminDashboard() {
                         fetchUrl="/fetchUniversities"
                         deleteUrl="/removeUniversity"
                         columns={[
-                            { key: 'id', label: 'ID' },
+                            { key: 'university_id', label: 'ID' },
                             { key: 'name', label: 'University' },
                             { key: 'address', label: 'Address' }
                         ]}

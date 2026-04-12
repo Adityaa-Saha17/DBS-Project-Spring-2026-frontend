@@ -256,7 +256,7 @@ export default function AdminDashboard() {
                                 {/* ================= COURSES ================= */}
                                 {tab === 'courses' && (
                                     <>
-                                        <input className={inputClass} placeholder="Course Name" onChange={e, setForm({...form, name: e.target.value})} />
+                                        <input className={inputClass} placeholder="Course Name" onChange={e => setForm({...form, name: e.target.value})} />
                                         <input type="number" className={inputClass} placeholder="University ID" onChange={e => setForm({...form, university_id: parseInt(e.target.value)})} />
                                         <input type="number" className={inputClass} placeholder="Year" onChange={e => setForm({...form, year: parseInt(e.target.value)})} />
                                     </>

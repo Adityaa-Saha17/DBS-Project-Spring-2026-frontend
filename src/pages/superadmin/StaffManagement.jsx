@@ -10,12 +10,22 @@ export default function StaffManagement() {
     });
 
     const handleCreateStaff = async () => {
+        const requestData = { ...form };
+        requestData.salary = parseFloat(requestData.salary) || 0;
+
         const endpoint = role === 'admin' ? '/addAdmin' : '/addSupportStaff';
+        
         try {
-            const res = await api.post(endpoint, form);
+            const res = await api.post(endpoint, requestData);
             alert(`Success! User created.\nTemporary Password: ${res.data.password}`);
-            setForm({});
-        } catch (err) { alert(err); }
+            setForm({
+                first_name: '', last_name: '', email: '', address: '', phone: '',
+                gender: '', salary: '', aadhaar_number: ''
+            });
+        } catch (err) { 
+            console.error(err);
+            alert("Error creating staff account: " + (err.response?.data || "Server Error")); 
+        }
     };
 
     return (

@@ -8,7 +8,15 @@ export default function BookList() {
     const navigate = useNavigate();
 
     useEffect(() => {
-        api.get('/fetchBooks').then(res => setBooks(res.data)).catch(console.error);
+        api.get('/fetchBooks')
+            .then(res => {
+                console.log("BOOKS:", res.data);
+                setBooks(Array.isArray(res.data) ? res.data : []);
+            })
+            .catch(err => {
+                console.error(err);
+                setBooks([]);
+            });
     }, []);
 
     const addToCart = async (bookId) => {

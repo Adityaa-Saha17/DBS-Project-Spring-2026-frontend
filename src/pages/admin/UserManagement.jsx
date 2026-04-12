@@ -16,7 +16,7 @@ export default function UserManagement() {
         dobMonth: '', 
         dobYear: '',
         major: '', 
-        status: 'active', 
+        status: 'undergraduate', 
         year_of_study: 1
     });
 
@@ -42,8 +42,9 @@ export default function UserManagement() {
             const year = form.dobYear;
             const month = String(parseInt(form.dobMonth) + 1).padStart(2, '0'); // Month is 0-indexed
             const day = String(form.dobDay).padStart(2, '0');
-            requestData.dob = `${year}-${month}-${day}`;
+            requestData.date_of_birth = `${year}-${month}-${day}`;
         }
+        console.log(requestData.date_of_birth);
 
         // 3. Data Type Conversion (Critical for Go Backend)
         requestData.university_id = parseInt(requestData.university_id) || 0;
@@ -53,12 +54,12 @@ export default function UserManagement() {
         } else {
             requestData.department_id = parseInt(requestData.department_id) || 0;
         }
-
+        console.log(requestData.status);
         // 4. API Call
         const endpoint = type === 'student' ? '/addStudent' : '/addInstructor';
         try {
-            await api.post(endpoint, requestData);
-            alert(`${type.charAt(0).toUpperCase() + type.slice(1)} registered successfully!`);
+            const res = await api.post(endpoint, requestData);
+            alert(`${type.charAt(0).toUpperCase() + type.slice(1)} registered successfully!\n Temporary Password for you : ${res.data.password}`);
             
             // Reset Form
             setForm({

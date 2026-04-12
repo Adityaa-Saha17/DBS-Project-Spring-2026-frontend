@@ -6,14 +6,20 @@ export default function MyOrders() {
     const [orders, setOrders] = useState([]);
 
     useEffect(() => {
-        api.get('/showMyOrders').then(res => setOrders(res.data));
+        api.get('/showMyOrders')
+            .then(res => {
+                console.log("ORDERS:", res.data);
+                setOrders(res.data);
+            })
+            .catch(err => {
+                console.error("ERROR:", err);
+            });
     }, []);
-
     const cancelOrder = async (id) => {
         if (!window.confirm("Are you sure you want to cancel this order?")) return;
         try {
             await api.post(`/cancelOrder?id=${id}`, {});
-            setOrders(orders.map(o => o.order_id === id ? {...o, status: 'canceled'} : o));
+            setOrders(orders.map(o => o.order_id === id ? { ...o, status: 'canceled' } : o));
             alert("Order cancelled successfully");
         } catch (err) { alert(err.response?.data); }
     };
@@ -29,10 +35,18 @@ export default function MyOrders() {
                         <div key={order.order_id} className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm transition-all hover:shadow-md">
                             <div className="flex justify-between items-start mb-6">
                                 <div>
-                                    <span className="text-xs font-bold uppercase tracking-widest text-slate-400">Order ID #{order.order_id}</span>
-                                    <p className="text-sm text-slate-500 mt-1">{order.created_date}</p>
+                                    <span className="text-xs font-bold uppercase tracking-widest text-slate-400">
+                                        Order ID #{order.order_id}
+                                    </span>
+                                    <p className="text-sm text-slate-500 mt-1">
+                                        {order.created_date?.String || "N/A"}
+                                    </p>
                                 </div>
-                                <span className={`px-4 py-1 rounded-full text-xs font-bold uppercase ${order.status === 'new' ? 'bg-blue-100 text-blue-600' : 'bg-slate-100 text-slate-600'}`}>
+
+                                <span className={`px-4 py-1 rounded-full text-xs font-bold uppercase ${order.status === 'new'
+                                        ? 'bg-blue-100 text-blue-600'
+                                        : 'bg-slate-100 text-slate-600'
+                                    }`}>
                                     {order.status}
                                 </span>
                             </div>
@@ -46,7 +60,7 @@ export default function MyOrders() {
                             </div>
                             {order.status === 'new' && (
                                 <button onClick={() => cancelOrder(order.order_id)} className="flex items-center gap-2 text-red-500 text-sm font-bold hover:underline transition-all">
-                                    <XCircle size={16}/> Cancel Order
+                                    <XCircle size={16} /> Cancel Order
                                 </button>
                             )}
                         </div>

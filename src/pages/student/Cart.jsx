@@ -6,8 +6,21 @@ export default function Cart() {
     const [items, setItems] = useState([]);
 
     useEffect(() => {
-        api.get('/cart').then(res => setItems(res.data));
-    }, []);
+    api.get('/cart')
+        .then(res => {
+            if (Array.isArray(res.data)) {
+                setItems(res.data);
+            } else if (Array.isArray(res.data.items)) {
+                setItems(res.data.items);
+            } else {
+                setItems([]);
+            }
+        })
+        .catch(err => {
+            console.error(err);
+            setItems([]); // prevent crash
+        });
+}, []);
 
     const removeItem = async (bookId) => {
         await api.post('/removeFromCart', { bookid: bookId });

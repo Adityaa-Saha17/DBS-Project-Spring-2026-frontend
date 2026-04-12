@@ -25,7 +25,6 @@ export default function Navbar() {
                 {user?.role === 'admin' && <Link to="/admin" className="text-slate-600 hover:text-primary font-medium">Admin Panel</Link>}
                 {user?.role === 'admin' && <Link to="/admin/users" className="text-slate-600 hover:text-primary font-medium">Users</Link>}
                 
-                {user?.role === 'support' && <Link to="/support" className="text-slate-600 hover:text-primary font-medium">Support Console</Link>}
                 {user?.role === 'superadmin' && <Link to="/superadmin" className="text-slate-600 hover:text-primary font-medium">Staff Mgmt</Link>}
                 
                 <Link to="/settings" className="text-slate-600 hover:text-primary"><Settings size={20}/></Link>

@@ -40,8 +40,8 @@ export default function AdminDashboard() {
                     <Book size={20}/> Books
                 </button>
 
-                <button onClick={() => setTab('univ')}
-                    className={`flex items-center gap-3 p-3 rounded-xl ${tab === 'univ' ? 'bg-primary' : 'text-slate-400 hover:bg-slate-800'}`}>
+                <button onClick={() => setTab('university')}
+                    className={`flex items-center gap-3 p-3 rounded-xl ${tab === 'university' ? 'bg-primary' : 'text-slate-400 hover:bg-slate-800'}`}>
                     <University size={20}/> Universities
                 </button>
 
@@ -143,7 +143,7 @@ export default function AdminDashboard() {
                         )}
 
                         {/* ================= UNIVERSITIES ================= */}
-                        {tab === 'univ' && (
+                        {tab === 'university' && (
                             <>
                                 <input className={inputClass} placeholder="University Name"
                                     onChange={e => setForm({...form, name: e.target.value})} />
@@ -238,7 +238,7 @@ export default function AdminDashboard() {
                         onClick={() =>
                             handleSubmit(
                                 tab === 'books' ? '/addBook' :
-                                tab === 'univ' ? '/addUniversity' :
+                                tab === 'university' ? '/addUniversity' :
                                 tab === 'courses' ? '/addCourse' :
                                 '/addSemester'
                             )
@@ -263,7 +263,7 @@ export default function AdminDashboard() {
                     />
                 )}
 
-                {tab === 'univ' && (
+                {tab === 'university' && (
                     <AdminTable
                         fetchUrl="/fetchUniversities"
                         deleteUrl="/removeUniversity"

@@ -7,87 +7,181 @@ export default function AdminDashboard() {
     const [tab, setTab] = useState('books');
     const [form, setForm] = useState({});
 
+    const inputClass = "p-3 border rounded-xl outline-none focus:ring-2 ring-primary";
+
     const handleSubmit = async (endpoint) => {
         try {
             await api.post(endpoint, form);
             alert("Data saved successfully!");
             setForm({});
-        } catch (err) { alert("Error: " + (err.response?.data || "Server Error")); }
+        } catch (err) {
+            alert("Error: " + (err.response?.data || "Server Error"));
+        }
     };
 
     return (
         <div className="flex h-screen pt-16 bg-surface">
+            
             {/* Sidebar */}
             <div className="w-64 bg-slate-900 text-white p-6 flex flex-col gap-4">
-                <button onClick={() => setTab('books')} className={`flex items-center gap-3 p-3 rounded-xl transition-all ${tab === 'books' ? 'bg-primary text-white' : 'text-slate-400 hover:bg-slate-800 hover:text-white'}`}>
+                <button onClick={() => setTab('books')}
+                    className={`flex items-center gap-3 p-3 rounded-xl ${tab === 'books' ? 'bg-primary' : 'text-slate-400 hover:bg-slate-800'}`}>
                     <Book size={20} /> Books
                 </button>
-                <button onClick={() => setTab('univ')} className={`flex items-center gap-3 p-3 rounded-xl transition-all ${tab === 'univ' ? 'bg-primary text-white' : 'text-slate-400 hover:bg-slate-800 hover:text-white'}`}>
+
+                <button onClick={() => setTab('univ')}
+                    className={`flex items-center gap-3 p-3 rounded-xl ${tab === 'univ' ? 'bg-primary' : 'text-slate-400 hover:bg-slate-800'}`}>
                     <University size={20} /> Universities
                 </button>
-                <button onClick={() => setTab('courses')} className={`flex items-center gap-3 p-3 rounded-xl transition-all ${tab === 'courses' ? 'bg-primary text-white' : 'text-slate-400 hover:bg-slate-800 hover:text-white'}`}>
+
+                <button onClick={() => setTab('courses')}
+                    className={`flex items-center gap-3 p-3 rounded-xl ${tab === 'courses' ? 'bg-primary' : 'text-slate-400 hover:bg-slate-800'}`}>
                     <GraduationCap size={20} /> Courses
                 </button>
-                <button onClick={() => setTab('semesters')} className={`flex items-center gap-3 p-3 rounded-xl transition-all ${tab === 'semesters' ? 'bg-primary text-white' : 'text-slate-400 hover:bg-slate-800 hover:text-white'}`}>
+
+                <button onClick={() => setTab('semesters')}
+                    className={`flex items-center gap-3 p-3 rounded-xl ${tab === 'semesters' ? 'bg-primary' : 'text-slate-400 hover:bg-slate-800'}`}>
                     <Calendar size={20} /> Semesters
                 </button>
             </div>
 
             {/* Main Content */}
             <div className="flex-1 p-8 overflow-y-auto">
-                <h2 className="text-3xl font-bold mb-8 text-slate-800 capitalize">{tab} Management</h2>
-                
-                <div className="bg-white p-8 rounded-3xl shadow-material border border-slate-100 max-w-4xl">
-                    <h3 className="text-lg font-bold mb-6 flex items-center gap-2 text-slate-700"><Plus size={20}/> Add New Entry</h3>
+                <h2 className="text-3xl font-bold mb-8 text-slate-800 capitalize">
+                    {tab} Management
+                </h2>
+
+                {/* FORM */}
+                <div className="bg-white p-8 rounded-3xl shadow-material border max-w-4xl">
+                    <h3 className="text-lg font-bold mb-6 flex items-center gap-2">
+                        <Plus size={20}/> Add New Entry
+                    </h3>
+
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+
+                        {/* ================= BOOKS ================= */}
                         {tab === 'books' && (
                             <>
-                                <input placeholder="Title" className="p-3 border rounded-xl outline-none focus:ring-2 ring-primary" onChange={e => setForm({...form, title: e.target.value})} />
-                                <input placeholder="ISBN" className="p-3 border rounded-xl outline-none focus:ring-2 ring-primary" onChange={e => setForm({...form, isbn: e.target.value})} />
-                                <input placeholder="Category" className="p-3 border rounded-xl outline-none focus:ring-2 ring-primary" onChange={e => setForm({...form, category: e.target.value})} />
-                                <input placeholder="Price" type="number" className="p-3 border rounded-xl outline-none focus:ring-2 ring-primary" onChange={e => setForm({...form, price: e.target.value})} />
-                                <input placeholder="Quantity" type="number" className="p-3 border rounded-xl outline-none focus:ring-2 ring-primary" onChange={e => setForm({...form, quantity: e.target.value})} />
-                                <input placeholder="Publisher" className="p-3 border rounded-xl outline-none focus:ring-2 ring-primary" onChange={e => setForm({...form, publisher: e.target.value})} />
+                                <input className={inputClass} placeholder="Title"
+                                    onChange={e => setForm({...form, title: e.target.value})} />
+
+                                <input className={inputClass} placeholder="ISBN"
+                                    onChange={e => setForm({...form, isbn: e.target.value})} />
+
+                                <input className={inputClass} placeholder="Publisher"
+                                    onChange={e => setForm({...form, publisher: e.target.value})} />
+
+                                <input className={inputClass} placeholder="Publication Date (YYYY-MM-DD)"
+                                    onChange={e => setForm({...form, publication_date: e.target.value})} />
+
+                                <input className={inputClass} placeholder="Edition"
+                                    onChange={e => setForm({...form, edition: e.target.value})} />
+
+                                <input className={inputClass} placeholder="Language"
+                                    onChange={e => setForm({...form, language: e.target.value})} />
+
+                                <input className={inputClass} placeholder="Format (Hardcover/PDF)"
+                                    onChange={e => setForm({...form, format: e.target.value})} />
+
+                                <input className={inputClass} placeholder="Type (New/Used/Ebook)"
+                                    onChange={e => setForm({...form, type: e.target.value})} />
+
+                                <input className={inputClass} placeholder="Purchase Option (Buy/Rent)"
+                                    onChange={e => setForm({...form, purchase_option: e.target.value})} />
+
+                                <input type="number" className={inputClass} placeholder="Price"
+                                    onChange={e => setForm({...form, price: parseFloat(e.target.value)})} />
+
+                                <input type="number" className={inputClass} placeholder="Quantity"
+                                    onChange={e => setForm({...form, quantity: parseInt(e.target.value)})} />
+
+                                <input className={inputClass} placeholder="Category"
+                                    onChange={e => setForm({...form, category: e.target.value})} />
+
+                                <input className={inputClass} placeholder="Subcategories (comma separated)"
+                                    onChange={e => setForm({...form, subcategories: e.target.value.split(',').map(s => s.trim())})} />
+
+                                <input className={inputClass} placeholder="Authors (comma separated)"
+                                    onChange={e => setForm({...form, authors: e.target.value.split(',').map(s => s.trim())})} />
+
+                                <input className={inputClass} placeholder="Keywords (comma separated)"
+                                    onChange={e => setForm({...form, keywords: e.target.value.split(',').map(s => s.trim())})} />
                             </>
                         )}
+
+                        {/* ================= UNIVERSITIES ================= */}
                         {tab === 'univ' && (
                             <>
-                                <input placeholder="University Name" className="p-3 border rounded-xl outline-none focus:ring-2 ring-primary" onChange={e => setForm({...form, name: e.target.value})} />
-                                <input placeholder="Address" className="p-3 border rounded-xl outline-none focus:ring-2 ring-primary" onChange={e => setForm({...form, address: e.target.value})} />
-                                <input placeholder="Rep First Name" className="p-3 border rounded-xl outline-none focus:ring-2 ring-primary" onChange={e => setForm({...form, rep_first_name: e.target.value})} />
-                                <input placeholder="Rep Last Name" className="p-3 border rounded-xl outline-none focus:ring-2 ring-primary" onChange={e => setForm({...form, rep_last_name: e.target.value})} />
+                                <input className={inputClass} placeholder="University Name"
+                                    onChange={e => setForm({...form, name: e.target.value})} />
+
+                                <input className={inputClass} placeholder="Address"
+                                    onChange={e => setForm({...form, address: e.target.value})} />
+
+                                <input className={inputClass} placeholder="Rep First Name"
+                                    onChange={e => setForm({...form, rep_first_name: e.target.value})} />
+
+                                <input className={inputClass} placeholder="Rep Last Name"
+                                    onChange={e => setForm({...form, rep_last_name: e.target.value})} />
                             </>
                         )}
+
+                        {/* ================= COURSES ================= */}
                         {tab === 'courses' && (
                             <>
-                                <input placeholder="Course Name" className="p-3 border rounded-xl outline-none focus:ring-2 ring-primary" onChange={e => setForm({...form, name: e.target.value})} />
-                                <input placeholder="University ID" type="number" className="p-3 border rounded-xl outline-none focus:ring-2 ring-primary" onChange={e => setForm({...form, university_id: e.target.value})} />
-                                <input placeholder="Year" type="number" className="p-3 border rounded-xl outline-none focus:ring-2 ring-primary" onChange={e => setForm({...form, year: e.target.value})} />
-                                <input placeholder="Semester" type="number" className="p-3 border rounded-xl outline-none focus:ring-2 ring-primary" onChange={e => setForm({...form, semester: e.target.value})} />
+                                <input className={inputClass} placeholder="Course Name"
+                                    onChange={e => setForm({...form, name: e.target.value})} />
+
+                                <input type="number" className={inputClass} placeholder="University ID"
+                                    onChange={e => setForm({...form, university_id: parseInt(e.target.value)})} />
+
+                                <input type="number" className={inputClass} placeholder="Year"
+                                    onChange={e => setForm({...form, year: parseInt(e.target.value)})} />
+
+                                <input type="number" className={inputClass} placeholder="Semester"
+                                    onChange={e => setForm({...form, semester: parseInt(e.target.value)})} />
                             </>
                         )}
                     </div>
-                    <button 
-                        onClick={() => handleSubmit(tab === 'books' ? '/addBook' : tab === 'univ' ? '/addUniversity' : '/addCourse')}
-                        className="mt-8 bg-primary text-white px-8 py-3 rounded-2xl font-bold hover:opacity-90 transition-all shadow-lg shadow-indigo-200"
+
+                    {/* SUBMIT BUTTON */}
+                    <button
+                        onClick={() =>
+                            handleSubmit(
+                                tab === 'books' ? '/addBook' :
+                                tab === 'univ' ? '/addUniversity' :
+                                '/addCourse'
+                            )
+                        }
+                        className="mt-8 bg-primary text-white px-8 py-3 rounded-2xl font-bold hover:opacity-90 shadow-lg"
                     >
                         Save Record
                     </button>
                 </div>
 
-                {/* Data List Section */}
+                {/* TABLES */}
                 {tab === 'books' && (
-                    <AdminTable 
-                        fetchUrl="/fetchBooks" 
-                        deleteUrl="/removeBook" 
-                        columns={[{ key: 'id', label: 'ID' }, { key: 'title', label: 'Title' }, { key: 'price', label: 'Price' }, { key: 'quantity', label: 'Stock' }]} 
+                    <AdminTable
+                        fetchUrl="/fetchBooks"
+                        deleteUrl="/removeBook"
+                        columns={[
+                            { key: 'id', label: 'ID' },
+                            { key: 'title', label: 'Title' },
+                            { key: 'price', label: 'Price' },
+                            { key: 'quantity', label: 'Stock' }
+                        ]}
                     />
                 )}
+
                 {tab === 'univ' && (
-                    <AdminTable 
-                        fetchUrl="/fetchUniversities" // Ensure this endpoint is added to your Go backend
-                        deleteUrl="/removeUniversity" 
-                        columns={[{ key: 'id', label: 'ID' }, { key: 'name', label: 'University' }, { key: 'address', label: 'Address' }]} 
+                    <AdminTable
+                        fetchUrl="/fetchUniversities"
+                        deleteUrl="/removeUniversity"
+                        columns={[
+                            { key: 'id', label: 'ID' },
+                            { key: 'name', label: 'University' },
+                            { key: 'address', label: 'Address' }
+                        ]}
                     />
                 )}
             </div>

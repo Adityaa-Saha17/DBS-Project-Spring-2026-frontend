@@ -262,6 +262,18 @@ export default function AdminDashboard() {
                         ]}
                     />
                 )}
+
+                {tab === 'univ' && (
+                    <AdminTable
+                        fetchUrl="/fetchUniversities"
+                        deleteUrl="/removeUniversity"
+                        columns={[
+                            { key: 'id', label: 'ID' },
+                            { key: 'name', label: 'University' },
+                            { key: 'address', label: 'Address' }
+                        ]}
+                    />
+                )}
             </div>
         </div>
     );

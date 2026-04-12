@@ -1,0 +1,21 @@
+@import "tailwindcss";
+
+@theme {
+  --color-primary: #6366F1;    /* This defines bg-primary, text-primary, etc. */
+  --color-surface: #F8FAFC;    /* This defines bg-surface, text-surface, etc. */
+  --radius-2xl: 1rem;
+}
+
+@layer base {
+  body {
+    @apply bg-surface text-slate-900 font-sans antialiased;
+  }
+}
+
+/* Material-like elevation */
+.shadow-material {
+  box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+}
+.shadow-material-hover:hover {
+  box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1);
+}

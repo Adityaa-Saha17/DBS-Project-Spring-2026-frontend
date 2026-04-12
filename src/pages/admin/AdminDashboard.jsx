@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import api from '../../api/axios';
 import { Plus, Book, University, GraduationCap, Calendar } from 'lucide-react';
 import AdminTable from '../../components/AdminTable';
@@ -6,12 +6,22 @@ import AdminTable from '../../components/AdminTable';
 export default function AdminDashboard() {
     const [tab, setTab] = useState('books');
     const [form, setForm] = useState({});
+    const [books, setBooks] = useState([]);
 
     const inputClass = "p-3 border rounded-xl outline-none focus:ring-2 ring-primary";
 
+    // Fetch books when semesters tab opens
+    useEffect(() => {
+        if (tab === 'semesters') {
+            api.get('/fetchBooks')
+                .then(res => setBooks(res.data))
+                .catch(() => alert("Failed to load books"));
+        }
+    }, [tab]);
+
     const handleSubmit = async (endpoint) => {
         try {
-            console.log(form); // debug
+            console.log(form);
             await api.post(endpoint, form);
             alert("Data saved successfully!");
             setForm({});
@@ -70,12 +80,12 @@ export default function AdminDashboard() {
                                 <input className={inputClass} placeholder="Publisher"
                                     onChange={e => setForm({...form, publisher: e.target.value})} />
 
+                                {/* DATE PICKER */}
                                 <input
                                     type="date"
                                     className={inputClass}
                                     onChange={e => {
-                                        const value = e.target.value; // YYYY-MM-DD
-                                        const formatted = value.replaceAll('-', '/'); // convert to YYYY/MM/DD
+                                        const formatted = e.target.value.replaceAll('-', '/');
                                         setForm({...form, publication_date: formatted});
                                     }}
                                 />
@@ -86,7 +96,7 @@ export default function AdminDashboard() {
                                 <input className={inputClass} placeholder="Language"
                                     onChange={e => setForm({...form, language: e.target.value})} />
 
-                                {/* FORMAT DROPDOWN */}
+                                {/* ENUM DROPDOWNS */}
                                 <select className={inputClass}
                                     defaultValue=""
                                     onChange={e => setForm({...form, format: e.target.value})}>
@@ -96,7 +106,6 @@ export default function AdminDashboard() {
                                     <option value="electronic">Electronic</option>
                                 </select>
 
-                                {/* TYPE DROPDOWN */}
                                 <select className={inputClass}
                                     defaultValue=""
                                     onChange={e => setForm({...form, type: e.target.value})}>
@@ -105,7 +114,6 @@ export default function AdminDashboard() {
                                     <option value="used">Used</option>
                                 </select>
 
-                                {/* PURCHASE OPTION DROPDOWN */}
                                 <select className={inputClass}
                                     defaultValue=""
                                     onChange={e => setForm({...form, purchase_option: e.target.value})}>
@@ -148,6 +156,12 @@ export default function AdminDashboard() {
 
                                 <input className={inputClass} placeholder="Rep Last Name"
                                     onChange={e => setForm({...form, rep_last_name: e.target.value})} />
+                                
+                                <input className={inputClass} placeholder="Rep Email"
+                                    onChange={e => setForm({...form, rep_email: e.target.value})} />
+                                
+                                <input className={inputClass} placeholder="Rep Phone"
+                                    onChange={e => setForm({...form, rep_phone: e.target.value})} />
                             </>
                         )}
 
@@ -167,6 +181,56 @@ export default function AdminDashboard() {
                                     onChange={e => setForm({...form, semester: parseInt(e.target.value)})} />
                             </>
                         )}
+
+                        {/* ================= SEMESTERS ================= */}
+                        {tab === 'semesters' && (
+                            <>
+                                <input type="number" className={inputClass} placeholder="Year"
+                                    onChange={e => setForm({...form, year: parseInt(e.target.value)})} />
+
+                                <select className={inputClass}
+                                    defaultValue=""
+                                    onChange={e => setForm({...form, season: e.target.value})}>
+                                    <option value="" disabled>Select Season</option>
+                                    <option value="spring">Spring</option>
+                                    <option value="summer">Summer</option>
+                                    <option value="fall">Fall</option>
+                                    <option value="winter">Winter</option>
+                                </select>
+
+                                <input type="number" className={inputClass} placeholder="Course ID"
+                                    onChange={e => setForm({...form, course_id: parseInt(e.target.value)})} />
+
+                                <input type="number" className={inputClass} placeholder="Instructor ID"
+                                    onChange={e => setForm({...form, instructor_id: parseInt(e.target.value)})} />
+
+                                <input type="number" className={inputClass} placeholder="University ID"
+                                    onChange={e => setForm({...form, university_id: parseInt(e.target.value)})} />
+
+                                {/* BOOK MULTI SELECT */}
+                                <div className="col-span-2">
+                                    <label className="text-sm text-slate-600 mb-1 block">
+                                        Select Books
+                                    </label>
+
+                                    <select
+                                        multiple
+                                        className={`${inputClass} h-40`}
+                                        onChange={e => {
+                                            const selected = Array.from(e.target.selectedOptions)
+                                                .map(option => parseInt(option.value));
+                                            setForm({...form, book_ids: selected});
+                                        }}
+                                    >
+                                        {books.map(book => (
+                                            <option key={book.id} value={book.id}>
+                                                {book.title} {/* name shown */}
+                                            </option>
+                                        ))}
+                                    </select>
+                                </div>
+                            </>
+                        )}
                     </div>
 
                     {/* SUBMIT */}
@@ -175,7 +239,8 @@ export default function AdminDashboard() {
                             handleSubmit(
                                 tab === 'books' ? '/addBook' :
                                 tab === 'univ' ? '/addUniversity' :
-                                '/addCourse'
+                                tab === 'courses' ? '/addCourse' :
+                                '/addSemester'
                             )
                         }
                         className="mt-8 bg-primary text-white px-8 py-3 rounded-2xl font-bold hover:opacity-90 shadow-lg"
@@ -194,18 +259,6 @@ export default function AdminDashboard() {
                             { key: 'title', label: 'Title' },
                             { key: 'price', label: 'Price' },
                             { key: 'quantity', label: 'Stock' }
-                        ]}
-                    />
-                )}
-
-                {tab === 'univ' && (
-                    <AdminTable
-                        fetchUrl="/fetchUniversities"
-                        deleteUrl="/removeUniversity"
-                        columns={[
-                            { key: 'id', label: 'ID' },
-                            { key: 'name', label: 'University' },
-                            { key: 'address', label: 'Address' }
                         ]}
                     />
                 )}

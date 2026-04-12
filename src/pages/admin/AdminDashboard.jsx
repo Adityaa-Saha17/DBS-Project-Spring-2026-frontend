@@ -7,6 +7,7 @@ export default function AdminDashboard() {
     const [tab, setTab] = useState('books');
     const [form, setForm] = useState({});
     const [books, setBooks] = useState([]);
+    const [instructors, setInstructors] = useState([]);
     const [allTickets, setAllTickets] = useState([]);
     const [selectedTicket, setSelectedTicket] = useState(null);
     const [resolveText, setResolveText] = useState('');
@@ -20,6 +21,10 @@ export default function AdminDashboard() {
             api.get('/fetchBooks')
                 .then(res => setBooks(res.data))
                 .catch(() => alert("Failed to load books"));
+
+            api.get('/fetchInstructor')
+                .then(res => setInstructors(Array.isArray(res.data) ? res.data : []))
+                .catch(() => alert("Failed to load instructors"));
         }
     }, [tab]);
 
@@ -274,7 +279,21 @@ export default function AdminDashboard() {
                                             <option value="winter">Winter</option>
                                         </select>
                                         <input type="number" className={inputClass} placeholder="Course ID" onChange={e => setForm({...form, course_id: parseInt(e.target.value)})} />
-                                        <input type="number" className={inputClass} placeholder="Instructor ID" onChange={e => setForm({...form, instructor_id: parseInt(e.target.value)})} />
+
+                                        {/* ── Instructor dropdown: shows full name, submits instructor_id ── */}
+                                        <select
+                                            className={inputClass}
+                                            defaultValue=""
+                                            onChange={e => setForm({...form, instructor_id: parseInt(e.target.value)})}
+                                        >
+                                            <option value="" disabled>Select Instructor</option>
+                                            {instructors.map(inst => (
+                                                <option key={inst.instructor_id} value={inst.instructor_id}>
+                                                    {inst.first_name} {inst.last_name}
+                                                </option>
+                                            ))}
+                                        </select>
+
                                         <input type="number" className={inputClass} placeholder="University ID" onChange={e => setForm({...form, university_id: parseInt(e.target.value)})} />
                                         <div className="col-span-2">
                                             <label className="text-sm text-slate-600 mb-1 block">Select Books</label>
@@ -328,7 +347,50 @@ export default function AdminDashboard() {
                             <AdminTable
                                 fetchUrl="/fetchDepartments" 
                                 deleteUrl="/removeDepartment"
-                                columns={[{ key: 'department_id', label: 'ID' }, { key: 'name', label: 'Department' }, { key: 'university_id', label: 'Univ ID' }]}
+                                columns={[{ key: 'department_id', label: 'ID' }, { key: 'name', label: 'Department' }, { key: 'university_id', label: 'University ID' }]}
+                            />
+                        )}
+
+                        {/* ================= COURSES TABLE ================= */}
+                        {tab === 'courses' && (
+                            <AdminTable
+                                fetchUrl="/fetchCourses"
+                                deleteUrl="/removeCourse"
+                                deleteParam="id"
+                                columns={[
+                                    { key: 'course_id',       label: 'ID' },
+                                    { key: 'name',            label: 'Course' },
+                                    { key: 'year',            label: 'Year' },
+                                    { key: 'university_name', label: 'University' },
+                                    {
+                                        key: 'departments',
+                                        label: 'Departments',
+                                        // departments comes back as a string[] from the backend
+                                        render: (val) => Array.isArray(val) ? val.join(', ') : (val ?? '—')
+                                    },
+                                ]}
+                            />
+                        )}
+
+                        {/* ================= SEMESTERS TABLE ================= */}
+                        {tab === 'semesters' && (
+                            <AdminTable
+                                fetchUrl="/fetchSemesters"
+                                deleteUrl="/removeSemester"
+                                deleteParam="id"
+                                columns={[
+                                    { key: 'sem_id',          label: 'ID' },
+                                    { key: 'course_name',     label: 'Course' },
+                                    { key: 'instructor_name', label: 'Instructor' },
+                                    { key: 'season',          label: 'Season' },
+                                    { key: 'year',            label: 'Year' },
+                                    { key: 'university_name', label: 'University' },
+                                    {
+                                        key: 'books',
+                                        label: 'Books',
+                                        render: (val) => Array.isArray(val) ? val.join(', ') : (val ?? '—')
+                                    },
+                                ]}
                             />
                         )}
                     </>

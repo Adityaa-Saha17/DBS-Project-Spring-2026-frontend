@@ -1,19 +1,27 @@
 import { useEffect, useState, useCallback } from 'react';
 import api from '../../api/axios';
-import { CheckCircle, RotateCcw, Package, Ticket, Send, UserPlus, Clock } from 'lucide-react';
+import { CheckCircle, RotateCcw, Package, Ticket, Send, UserPlus } from 'lucide-react';
 
 export default function SupportDashboard() {
     const [view, setView] = useState('orders'); // 'orders', 'tickets', 'help'
     const [orders, setOrders] = useState([]);
     const [allTickets, setAllTickets] = useState([]);
     const [myTickets, setMyTickets] = useState([]);
+    const [admins, setAdmins] = useState([]); 
     const [loading, setLoading] = useState(false);
     
-    // State for generating a ticket (for the support staff themselves)
     const [helpForm, setHelpForm] = useState({ category: '', title: '', description: '' });
-    
-    // State for assigning a ticket to an admin
     const [assignForm, setAssignForm] = useState({ ticket_id: '', admin_id: '' });
+
+    // Order Status Constants based on DB Enum
+    const ORDER_STATUSES = [
+        { value: 'new', label: 'New' },
+        { value: 'processed', label: 'Processed' },
+        { value: 'awaiting_shipping', label: 'Awaiting Shipping' },
+        { value: 'shipped', label: 'Shipped' },
+        { value: 'canceled', label: 'Canceled' },
+        // { value: 'returned', label: 'Returned' },
+    ];
 
     // --- DATA FETCHING ---
 
@@ -33,8 +41,6 @@ export default function SupportDashboard() {
     const loadAllTickets = useCallback(async () => {
         setLoading(true);
         try {
-            // Support staff fetches only 'new' tickets via /viewNewTickets.
-            // /viewALLTickets is admin-only and shows all statuses — not appropriate here.
             const res = await api.get('/viewNewTickets');
             setAllTickets(Array.isArray(res.data) ? res.data : []);
         } catch (err) { 
@@ -58,11 +64,23 @@ export default function SupportDashboard() {
         }
     }, []);
 
+    const loadAdmins = useCallback(async () => {
+        try {
+            const res = await api.get('/fetchAdmins');
+            setAdmins(Array.isArray(res.data) ? res.data : []);
+        } catch (err) { 
+            console.error("Admin fetch error:", err); 
+        }
+    }, []);
+
     useEffect(() => {
         if (view === 'orders') loadOrders();
-        if (view === 'tickets') loadAllTickets();
+        if (view === 'tickets') {
+            loadAllTickets();
+            loadAdmins();
+        }
         if (view === 'help') loadMyTickets();
-    }, [view, loadOrders, loadAllTickets]);
+    }, [view, loadOrders, loadAllTickets, loadMyTickets, loadAdmins]);
 
     // --- ACTION HANDLERS ---
 
@@ -93,21 +111,18 @@ export default function SupportDashboard() {
     const handleAssignTicket = async (e) => {
         e.preventDefault();
         try {
-            // FIX: Parse both IDs to integers before sending.
-            // The Go backend expects JSON numbers, but HTML inputs always give strings.
-            // Sending "admin_id": "3" instead of "admin_id": 3 causes silent backend failure.
             const payload = {
                 ticket_id: parseInt(assignForm.ticket_id, 10),
                 admin_id: parseInt(assignForm.admin_id, 10),
             };
 
             if (isNaN(payload.ticket_id) || isNaN(payload.admin_id)) {
-                alert("Invalid ticket or admin ID.");
+                alert("Invalid ticket or admin selection.");
                 return;
             }
 
             await api.post('/handleNewTicket', payload);
-            alert(`Ticket #${payload.ticket_id} has been assigned to Admin ID ${payload.admin_id}`);
+            alert(`Ticket #${payload.ticket_id} has been assigned successfully`);
             setAssignForm({ ticket_id: '', admin_id: '' });
             loadAllTickets();
         } catch (err) { 
@@ -158,7 +173,7 @@ export default function SupportDashboard() {
                                         <tr>
                                             <th className="p-4">Order ID</th>
                                             <th className="p-4">Student Email</th>
-                                            <th className="p-4">Status</th>
+                                            <th className="p-4">Current Status</th>
                                             <th className="p-4 text-right">Actions</th>
                                         </tr>
                                     </thead>
@@ -171,17 +186,35 @@ export default function SupportDashboard() {
                                                     <td className="p-4 font-bold">#{o.order_id}</td>
                                                     <td className="p-4 text-slate-600">{o.student_email || 'N/A'}</td>
                                                     <td className="p-4">
-                                                        <span className="px-3 py-1 bg-slate-100 rounded-full text-xs font-bold uppercase text-slate-600">
+                                                        <span className={`px-3 py-1 rounded-full text-xs font-bold uppercase ${o.status === 'canceled' ? 'bg-red-100 text-red-600' : 'bg-slate-100 text-slate-600'}`}>
                                                             {o.status}
                                                         </span>
                                                     </td>
-                                                    <td className="p-4 flex justify-end gap-3">
-                                                        <button onClick={() => updateOrderStatus(o.order_id, 'shipped')} className="p-2 text-green-600 hover:bg-green-50 rounded-xl transition-all" title="Mark as Shipped">
-                                                            <CheckCircle size={20}/>
-                                                        </button>
-                                                        <button onClick={() => processReturn(o.order_id)} className="p-2 text-blue-600 hover:bg-blue-50 rounded-xl transition-all" title="Process Return">
+                                                    <td className="p-4 flex justify-end gap-4 items-center">
+                                                        {/* Status Change Dropdown */}
+                                                        <div className="flex flex-col items-end">
+                                                            <label className="text-[10px] text-slate-400 uppercase font-bold mb-1">Update Status</label>
+                                                            <select 
+                                                                value={o.status}
+                                                                disabled={o.status === 'canceled'}
+                                                                onChange={(e) => updateOrderStatus(o.order_id, e.target.value)}
+                                                                className={`text-sm p-2 border rounded-lg outline-none transition-all ${o.status === 'canceled' ? 'bg-slate-100 text-slate-400 cursor-not-allowed' : 'bg-white hover:border-primary focus:ring-2 ring-primary'}`}
+                                                            >
+                                                                {ORDER_STATUSES.map(s => (
+                                                                    <option key={s.value} value={s.value}>{s.label}</option>
+                                                                ))}
+                                                            </select>
+                                                        </div>
+
+                                                        {/* Return Button
+                                                        <button 
+                                                            onClick={() => processReturn(o.order_id)} 
+                                                            disabled={o.status === 'canceled'}
+                                                            className={`p-2 text-blue-600 hover:bg-blue-50 rounded-xl transition-all ${o.status === 'canceled' ? 'opacity-30 cursor-not-allowed' : ''}`} 
+                                                            title="Process Return"
+                                                        >
                                                             <RotateCcw size={20}/>
-                                                        </button>
+                                                        </button> */}
                                                     </td>
                                                 </tr>
                                             ))
@@ -205,7 +238,6 @@ export default function SupportDashboard() {
                             <div className="text-center py-20 text-slate-500">Loading tickets...</div>
                         ) : (
                             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                                {/* Tickets Table */}
                                 <div className="lg:col-span-2 bg-white rounded-3xl border border-slate-100 overflow-hidden shadow-material">
                                     <table className="w-full text-left">
                                         <thead className="bg-slate-50 border-b border-slate-100 text-slate-500 text-sm">
@@ -246,7 +278,6 @@ export default function SupportDashboard() {
                                     </table>
                                 </div>
 
-                                {/* Assignment Panel */}
                                 <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-material h-fit sticky top-24">
                                     <h3 className="text-xl font-bold mb-6 flex items-center gap-2 text-slate-800">
                                         <UserPlus size={20} className="text-primary"/> Assign to Admin
@@ -258,15 +289,20 @@ export default function SupportDashboard() {
                                                 <p className="text-lg font-bold text-slate-700">#{assignForm.ticket_id}</p>
                                             </div>
                                             <div>
-                                                <label className="text-xs font-semibold text-slate-500 block mb-1">Admin Employee ID</label>
-                                                <input 
-                                                    type="number"
+                                                <label className="text-xs font-semibold text-slate-500 block mb-1">Select Administrator</label>
+                                                <select 
+                                                    className="w-full p-3 border rounded-xl outline-none focus:ring-2 ring-primary transition-all bg-white" 
                                                     value={assignForm.admin_id}
-                                                    className="w-full p-3 border rounded-xl outline-none focus:ring-2 ring-primary transition-all" 
-                                                    placeholder="Enter Admin ID"
                                                     onChange={e => setAssignForm({...assignForm, admin_id: e.target.value})}
                                                     required
-                                                />
+                                                >
+                                                    <option value="">Choose an admin...</option>
+                                                    {admins.map(admin => (
+                                                        <option key={admin.employee_id} value={admin.employee_id}>
+                                                            {admin.first_name} {admin.last_name} (ID: {admin.employee_id})
+                                                        </option>
+                                                    ))}
+                                                </select>
                                             </div>
                                             <button className="w-full bg-primary text-white p-3 rounded-xl font-bold hover:opacity-90 transition-all">
                                                 Confirm Assignment
@@ -290,10 +326,9 @@ export default function SupportDashboard() {
                     </>
                 )}
 
-                {/* VIEW: MY HELP — exact replica of student Tickets.jsx */}
+                {/* VIEW: MY HELP */}
                 {view === 'help' && (
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
-                        {/* Left: Submit form */}
                         <div className="bg-white p-8 rounded-3xl border border-slate-100 shadow-material h-fit sticky top-24">
                             <h2 className="text-2xl font-bold mb-6 flex items-center gap-2 text-slate-800">
                                 <Send size={24} /> New Support Ticket
@@ -333,7 +368,6 @@ export default function SupportDashboard() {
                             </form>
                         </div>
 
-                        {/* Right: My tickets list */}
                         <div>
                             <h2 className="text-2xl font-bold mb-6 flex items-center gap-2 text-slate-800">
                                 <Send size={24} /> My Tickets

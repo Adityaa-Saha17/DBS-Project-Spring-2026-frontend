@@ -56,7 +56,10 @@ export default function AdminTable({ fetchUrl, deleteUrl, columns = [] }) {
                             <tr key={i} className="border-b border-slate-50 hover:bg-slate-50 transition-all">
                                 {columns.map(col => (
                                     <td key={col.key} className="p-4 text-slate-700">
-                                        {item[col.key] || 'N/A'}
+                                        {col.render 
+                                            ? col.render(item[col.key])
+                                            : (item[col.key] !== null && item[col.key] !== undefined ? item[col.key] : 'n/a')
+                                        }
                                     </td>
                                 ))}
                                 <td className="p-4 text-right flex justify-end gap-2">

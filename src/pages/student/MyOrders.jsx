@@ -9,7 +9,7 @@ export default function MyOrders() {
         api.get('/showMyOrders')
             .then(res => {
                 console.log("ORDERS:", res.data);
-                setOrders(res.data);
+                setOrders(Array.isArray(res.data) ? res.data : []);
             })
             .catch(err => {
                 console.error("ERROR:", err);

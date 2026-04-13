@@ -1,10 +1,16 @@
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom'; // ✅ Added useLocation
 import { useAuth } from '../context/AuthContext';
 import { LogOut, Library, Settings } from 'lucide-react';
 
 export default function Navbar() {
     const { user, logout } = useAuth();
     const navigate = useNavigate();
+    const location = useLocation(); // ✅ Get current route
+
+    // ✅ If the current path is /login, don't render the Navbar at all
+    if (location.pathname === '/login') {
+        return null;
+    }
 
     const handleLogout = () => {
         logout();
@@ -27,11 +33,15 @@ export default function Navbar() {
                 
                 {user?.role === 'superadmin' && <Link to="/superadmin" className="text-slate-600 hover:text-primary font-medium">Staff Mgmt</Link>}
                 
-                <Link to="/settings" className="text-slate-600 hover:text-primary"><Settings size={20}/></Link>
-                
-                <button onClick={handleLogout} className="flex items-center gap-2 text-red-500 font-medium hover:bg-red-50 px-3 py-2 rounded-xl transition-all">
-                    <LogOut size={18} /> Logout
-                </button>
+                {/* Only show settings and logout if a user is logged in */}
+                {user && (
+                    <>
+                        <Link to="/settings" className="text-slate-600 hover:text-primary"><Settings size={20}/></Link>
+                        <button onClick={handleLogout} className="flex items-center gap-2 text-red-500 font-medium hover:bg-red-50 px-3 py-2 rounded-xl transition-all">
+                            <LogOut size={18} /> Logout
+                        </button>
+                    </>
+                )}
             </div>
         </nav>
     );

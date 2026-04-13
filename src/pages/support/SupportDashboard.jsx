@@ -131,7 +131,7 @@ export default function SupportDashboard() {
     };
 
     return (
-        <div className="flex h-screen pt-16 bg-surface">
+        <div className="flex h-screen pt-0 bg-surface">
             {/* Sidebar Navigation */}
             <div className="w-64 bg-slate-100 p-6 flex flex-col gap-4 border-r border-slate-200">
                 <button 

@@ -19,7 +19,7 @@ export default function AdminDashboard() {
     useEffect(() => {
         if (tab === 'semesters') {
             api.get('/fetchBooks')
-                .then(res => setBooks(res.data))
+                .then(res => setBooks(Array.isArray(res.data) ? res.data : []))
                 .catch(() => alert("Failed to load books"));
 
             api.get('/fetchInstructor')
@@ -81,7 +81,7 @@ export default function AdminDashboard() {
     };
 
     return (
-        <div className="flex h-screen pt-16 bg-surface">
+        <div className="flex h-screen pt-0 bg-surface">
             
             {/* Sidebar */}
             <div className="w-64 bg-slate-900 text-white p-6 flex flex-col gap-4">
@@ -331,7 +331,20 @@ export default function AdminDashboard() {
                             <AdminTable
                                 fetchUrl="/fetchBooks"
                                 deleteUrl="/removeBook"
-                                columns={[{ key: 'id', label: 'ID' }, { key: 'title', label: 'Title' }, { key: 'price', label: 'Price' }, { key: 'quantity', label: 'Stock' }]}
+                                columns={[
+                                    { key: 'id', label: 'ID' },
+                                    { key: 'title', label: 'Title' },
+                                    { key: 'price', label: 'Price' },
+                                    { 
+                                        key: 'quantity', 
+                                        label: 'Stock', 
+                                        render: (val) => val === 0 ? (
+                                            <span className="px-2 py-1 rounded-full text-[10px] font-bold bg-red-100 text-red-600">
+                                                Out of Stock
+                                            </span>
+                                        ) : val 
+                                    }
+                                ]}
                             />
                         )}
 

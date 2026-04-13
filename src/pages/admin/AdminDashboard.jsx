@@ -12,10 +12,11 @@ export default function AdminDashboard() {
     const [selectedTicket, setSelectedTicket] = useState(null);
     const [resolveText, setResolveText] = useState('');
     const [status, setStatus] = useState('in-process');
+    const [bookDropdownOpen, setBookDropdownOpen] = useState(false);  // NEW
+    const [bookSearch, setBookSearch] = useState('');                  // NEW
 
     const inputClass = "p-3 border rounded-xl outline-none focus:ring-2 ring-primary transition-all";
 
-    // Fetch books for the semesters multi-select
     useEffect(() => {
         if (tab === 'semesters') {
             api.get('/fetchBooks')
@@ -28,7 +29,6 @@ export default function AdminDashboard() {
         }
     }, [tab]);
 
-    // Fetch tickets when ticket tab is open
     const loadTickets = useCallback(async () => {
         try {
             const res = await api.get('/viewALLTickets');
@@ -46,7 +46,6 @@ export default function AdminDashboard() {
 
     const handleSubmit = async (endpoint) => {
         try {
-            // Prepare data to ensure numbers are sent as numbers, not strings
             const requestData = { ...form };
             if (requestData.university_id) requestData.university_id = parseInt(requestData.university_id);
             if (requestData.price) requestData.price = parseFloat(requestData.price);
@@ -59,6 +58,8 @@ export default function AdminDashboard() {
             await api.post(endpoint, requestData);
             alert("Data saved successfully!");
             setForm({});
+            setBookSearch('');           // NEW - reset on save
+            setBookDropdownOpen(false);  // NEW - close dropdown on save
         } catch (err) {
             alert("Error: " + (err.response?.data || "Server Error"));
         }
@@ -122,7 +123,6 @@ export default function AdminDashboard() {
             <div className="flex-1 p-8 overflow-y-auto">
                 <h2 className="text-3xl font-bold mb-8 capitalize">{tab} Management</h2>
 
-                {/* Ticket Resolution Interface */}
                 {tab === 'tickets' ? (
                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                         <div className="lg:col-span-2 bg-white p-6 rounded-3xl shadow border border-slate-100">
@@ -196,7 +196,6 @@ export default function AdminDashboard() {
                     </div>
                 ) : (
                     <>
-                        {/* GENERAL FORM SECTION */}
                         <div className="bg-white p-8 rounded-3xl shadow border max-w-4xl">
                             <h3 className="text-lg font-bold mb-6 flex items-center gap-2">
                                 <Plus size={20}/> Add New Entry
@@ -204,7 +203,6 @@ export default function AdminDashboard() {
 
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
 
-                                {/* ================= BOOKS ================= */}
                                 {tab === 'books' && (
                                     <>
                                         <input className={inputClass} placeholder="Title" onChange={e => setForm({...form, title: e.target.value})} />
@@ -238,7 +236,6 @@ export default function AdminDashboard() {
                                     </>
                                 )}
 
-                                {/* ================= UNIVERSITIES ================= */}
                                 {tab === 'university' && (
                                     <>
                                         <input className={inputClass} placeholder="University Name" onChange={e => setForm({...form, name: e.target.value})} />
@@ -250,7 +247,6 @@ export default function AdminDashboard() {
                                     </>
                                 )}
 
-                                {/* ================= DEPARTMENTS ================= */}
                                 {tab === 'department' && (
                                     <>
                                         <input className={inputClass} placeholder="Department Name" onChange={e => setForm({...form, name: e.target.value})} />
@@ -258,7 +254,6 @@ export default function AdminDashboard() {
                                     </>
                                 )}
 
-                                {/* ================= COURSES ================= */}
                                 {tab === 'courses' && (
                                     <>
                                         <input className={inputClass} placeholder="Course Name" onChange={e => setForm({...form, name: e.target.value})} />
@@ -280,7 +275,6 @@ export default function AdminDashboard() {
                                         </select>
                                         <input type="number" className={inputClass} placeholder="Course ID" onChange={e => setForm({...form, course_id: parseInt(e.target.value)})} />
 
-                                        {/* ── Instructor dropdown: shows full name, submits instructor_id ── */}
                                         <select
                                             className={inputClass}
                                             defaultValue=""
@@ -295,17 +289,105 @@ export default function AdminDashboard() {
                                         </select>
 
                                         <input type="number" className={inputClass} placeholder="University ID" onChange={e => setForm({...form, university_id: parseInt(e.target.value)})} />
-                                        <div className="col-span-2">
+
+                                        {/* ======= NEW: Book Checkbox Dropdown ======= */}
+                                        <div className="col-span-2 relative">
                                             <label className="text-sm text-slate-600 mb-1 block">Select Books</label>
-                                            <select multiple className={`${inputClass} h-40`} onChange={e => {
-                                                const selected = Array.from(e.target.selectedOptions).map(option => parseInt(option.value));
-                                                setForm({...form, book_ids: selected});
-                                            }}>
-                                                {books.map(book => (
-                                                    <option key={book.id} value={book.id}>{book.title}</option>
-                                                ))}
-                                            </select>
+
+                                            {/* Trigger button */}
+                                            <button
+                                                type="button"
+                                                onClick={() => setBookDropdownOpen(prev => !prev)}
+                                                className={`${inputClass} w-full text-left flex justify-between items-center bg-white`}
+                                            >
+                                                <span className="truncate text-sm text-slate-700">
+                                                    {form.book_ids?.length
+                                                        ? `${form.book_ids.length} book(s) selected`
+                                                        : 'Select books...'}
+                                                </span>
+                                                <span className="ml-2 text-slate-400 text-xs">{bookDropdownOpen ? '▲' : '▼'}</span>
+                                            </button>
+
+                                            {/* Selected book tags */}
+                                            {form.book_ids?.length > 0 && (
+                                                <div className="flex flex-wrap gap-2 mt-2">
+                                                    {form.book_ids.map(id => {
+                                                        const book = books.find(b => (b.book_id ?? b.id) === id);
+                                                        return (
+                                                            <span key={id} className="flex items-center gap-1 px-3 py-1 bg-primary/10 text-primary text-xs font-semibold rounded-full">
+                                                                {book?.title ?? `Book #${id}`}
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={() => setForm({
+                                                                        ...form,
+                                                                        book_ids: form.book_ids.filter(b => b !== id)
+                                                                    })}
+                                                                    className="ml-1 hover:text-red-500 font-bold"
+                                                                >×</button>
+                                                            </span>
+                                                        );
+                                                    })}
+                                                </div>
+                                            )}
+
+                                            {/* Dropdown panel */}
+                                            {bookDropdownOpen && (
+                                                <div className="absolute z-50 mt-1 w-full bg-white border border-slate-200 rounded-xl shadow-lg max-h-64 flex flex-col">
+                                                    {/* Search */}
+                                                    <div className="p-2 border-b border-slate-100">
+                                                        <input
+                                                            className="w-full p-2 text-sm border rounded-lg outline-none focus:ring-2 ring-primary"
+                                                            placeholder="Search books..."
+                                                            value={bookSearch}
+                                                            onChange={e => setBookSearch(e.target.value)}
+                                                        />
+                                                    </div>
+
+                                                    {/* Book list */}
+                                                    <div className="overflow-y-auto flex-1">
+                                                        {books
+                                                            .filter(book => book.title.toLowerCase().includes(bookSearch.toLowerCase()))
+                                                            .map(book => {
+                                                                const bookId = book.book_id ?? book.id;
+                                                                const isSelected = (form.book_ids || []).includes(bookId);
+                                                                return (
+                                                                    <label
+                                                                        key={bookId}
+                                                                        className="flex items-center gap-3 px-4 py-2 hover:bg-slate-50 cursor-pointer text-sm"
+                                                                    >
+                                                                        <input
+                                                                            type="checkbox"
+                                                                            checked={isSelected}
+                                                                            onChange={() => {
+                                                                                const current = form.book_ids || [];
+                                                                                const updated = isSelected
+                                                                                    ? current.filter(b => b !== bookId)
+                                                                                    : [...current, bookId];
+                                                                                setForm({ ...form, book_ids: updated });
+                                                                            }}
+                                                                            className="accent-primary"
+                                                                        />
+                                                                        <span>{book.title}</span>
+                                                                    </label>
+                                                                );
+                                                            })}
+                                                    </div>
+
+                                                    {/* Footer */}
+                                                    <div className="p-2 border-t border-slate-100 flex justify-between items-center text-xs text-slate-400">
+                                                        <span>{form.book_ids?.length || 0} selected</span>
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => setBookDropdownOpen(false)}
+                                                            className="text-primary font-bold hover:underline"
+                                                        >
+                                                            Done
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            )}
                                         </div>
+                                        {/* ======= END: Book Checkbox Dropdown ======= */}
                                     </>
                                 )}
                             </div>
@@ -326,7 +408,6 @@ export default function AdminDashboard() {
                             </button>
                         </div>
 
-                        {/* TABLES SECTION */}
                         {tab === 'books' && (
                             <AdminTable
                                 fetchUrl="/fetchBooks"
@@ -364,7 +445,6 @@ export default function AdminDashboard() {
                             />
                         )}
 
-                        {/* ================= COURSES TABLE ================= */}
                         {tab === 'courses' && (
                             <AdminTable
                                 fetchUrl="/fetchCourses"
@@ -378,14 +458,12 @@ export default function AdminDashboard() {
                                     {
                                         key: 'departments',
                                         label: 'Departments',
-                                        // departments comes back as a string[] from the backend
                                         render: (val) => Array.isArray(val) ? val.join(', ') : (val ?? '—')
                                     },
                                 ]}
                             />
                         )}
 
-                        {/* ================= SEMESTERS TABLE ================= */}
                         {tab === 'semesters' && (
                             <AdminTable
                                 fetchUrl="/fetchSemesters"

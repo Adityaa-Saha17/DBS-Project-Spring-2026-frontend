@@ -14,9 +14,8 @@ export default function AdminDashboard() {
     const [deptDropdownOpen, setDeptDropdownOpen] = useState(false);
     const [deptSearch, setDeptSearch] = useState('');
     const [resolveText, setResolveText] = useState('');
-    const [ticketTab, setTicketTab] = useState('queue'); // 'queue' or 'resolved'
-    const [ticketViewMode, setTicketViewMode] = useState('details'); // 'details' or 'resolve'
-    const [status, setStatus] = useState('in-process');
+    const [ticketTab, setTicketTab] = useState('queue');
+    const [ticketViewMode, setTicketViewMode] = useState('details');
     const [bookDropdownOpen, setBookDropdownOpen] = useState(false);
     const [bookSearch, setBookSearch] = useState('');
     const [universities, setUniversities] = useState([]);

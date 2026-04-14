@@ -19,9 +19,9 @@ export default function Navbar() {
 
     return (
         <nav className="bg-white border-b border-slate-200 px-6 py-3 flex justify-between items-center sticky top-0 z-50">
-            <Link to="/" className="flex items-center gap-2 font-bold text-xl text-primary">
-                <Library /> <span>GyanPustak</span>
-            </Link>
+            <div className="flex items-center gap-2 font-bold text-xl text-primary">
+                <Library /> <span >GyanPustak</span>
+            </div>
             <div className="flex items-center gap-6">
                 {user?.role === 'student' && <Link to="/catalog" className="text-slate-600 hover:text-primary font-medium">Catalog</Link>}
                 {user?.role === 'student' && <Link to="/cart" className="text-slate-600 hover:text-primary font-medium">Cart</Link>}

@@ -131,7 +131,7 @@ export default function SupportDashboard() {
     };
 
     return (
-        <div className="flex h-screen pt-0 bg-surface">
+        <div className="flex h-[calc(100vh-64px)] bg-surface overflow-hidden">
             {/* Sidebar Navigation */}
             <div className="w-64 bg-slate-100 p-6 flex flex-col gap-4 border-r border-slate-200">
                 <button 

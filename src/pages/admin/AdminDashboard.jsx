@@ -10,10 +10,17 @@ export default function AdminDashboard() {
     const [instructors, setInstructors] = useState([]);
     const [allTickets, setAllTickets] = useState([]);
     const [selectedTicket, setSelectedTicket] = useState(null);
+    const [departments, setDepartments] = useState([]);
+    const [deptDropdownOpen, setDeptDropdownOpen] = useState(false);
+    const [deptSearch, setDeptSearch] = useState('');
     const [resolveText, setResolveText] = useState('');
+    const [ticketTab, setTicketTab] = useState('queue'); // 'queue' or 'resolved'
+    const [ticketViewMode, setTicketViewMode] = useState('details'); // 'details' or 'resolve'
     const [status, setStatus] = useState('in-process');
-    const [bookDropdownOpen, setBookDropdownOpen] = useState(false);  // NEW
-    const [bookSearch, setBookSearch] = useState('');                  // NEW
+    const [bookDropdownOpen, setBookDropdownOpen] = useState(false);
+    const [bookSearch, setBookSearch] = useState('');
+    const [universities, setUniversities] = useState([]);
+    const [courses, setCourses] = useState([]);
 
     const inputClass = "p-3 border rounded-xl outline-none focus:ring-2 ring-primary transition-all";
 
@@ -27,7 +34,35 @@ export default function AdminDashboard() {
                 .then(res => setInstructors(Array.isArray(res.data) ? res.data : []))
                 .catch(() => alert("Failed to load instructors"));
         }
+        if (tab === 'courses' || tab === 'department' || tab === 'semesters') {
+            api.get('/fetchUniversities')
+                .then(res => setUniversities(Array.isArray(res.data) ? res.data : []))
+                .catch(() => alert("Failed to load universities"));
+        }
     }, [tab]);
+
+    const fetchDepartmentsByUni = async (uniId) => {
+        if (!uniId) return;
+        try {
+            const res = await api.get(`/fetchDepartments?university_id=${uniId}`);
+            const data = Array.isArray(res.data) ? res.data : [];
+            console.log("Departments loaded:", data); // Debugging: Check if data arrives here
+            setDepartments(data); // This trigger the UI re-render
+        } catch (err) {
+            console.error("Error fetching departments:", err);
+        }
+    };
+
+    const fetchCoursesByUni = async (uniId) => {
+        if (!uniId) return;
+        try {
+            // Assuming your backend endpoint /fetchCourses supports ?university_id=
+            const res = await api.get(`/fetchCourses?university_id=${uniId}`);
+            setCourses(Array.isArray(res.data) ? res.data : []);
+        } catch (err) {
+            console.error("Error fetching courses:", err);
+        }
+    };
 
     const loadTickets = useCallback(async () => {
         try {
@@ -58,34 +93,37 @@ export default function AdminDashboard() {
             await api.post(endpoint, requestData);
             alert("Data saved successfully!");
             setForm({});
-            setBookSearch('');           // NEW - reset on save
-            setBookDropdownOpen(false);  // NEW - close dropdown on save
+            setBookSearch('');
+            setBookDropdownOpen(false);
+            setDeptSearch('');
+            setDeptDropdownOpen(false);
         } catch (err) {
             alert("Error: " + (err.response?.data || "Server Error"));
         }
     };
 
-    const handleResolveTicket = async () => {
+    const updateTicketStatus = async (newStatus, solution = '') => {
         try {
             await api.post('/changeAssignedTicketStatus', {
                 ticket_id: selectedTicket.ticket_id,
-                new_status: status,
-                solution_description: resolveText
+                new_status: newStatus,
+                solution_description: solution
             });
-            alert("Ticket updated successfully!");
+            alert(`Ticket updated to ${newStatus}!`);
             setResolveText('');
             setSelectedTicket(null);
-            loadTickets();
+            setTicketViewMode('details'); // Reset view
+            loadTickets(); // Refresh the list
         } catch (err) {
-            alert("Resolution failed: " + (err.response?.data || "Server Error"));
+            alert("Update failed: " + (err.response?.data || "Server Error"));
         }
     };
 
     return (
-        <div className="flex h-screen pt-0 bg-surface">
+        <div className="flex h-[calc(100vh-64px)] bg-surface overflow-hidden">
             
             {/* Sidebar */}
-            <div className="w-64 bg-slate-900 text-white p-6 flex flex-col gap-4">
+            <div className="w-64 bg-slate-900 text-white p-6 flex flex-col gap-4 h-full">
                 <button onClick={() => setTab('books')}
                     className={`flex items-center gap-3 p-3 rounded-xl transition-all ${tab === 'books' ? 'bg-primary' : 'text-slate-400 hover:bg-slate-800'}`}>
                     <Book size={20}/> Books
@@ -124,74 +162,164 @@ export default function AdminDashboard() {
                 <h2 className="text-3xl font-bold mb-8 capitalize">{tab} Management</h2>
 
                 {tab === 'tickets' ? (
-                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                        <div className="lg:col-span-2 bg-white p-6 rounded-3xl shadow border border-slate-100">
-                            <h3 className="text-xl font-bold mb-6">All Tickets</h3>
-                            <div className="overflow-x-auto">
-                                <table className="w-full text-left">
-                                    <thead className="bg-slate-50 text-slate-500 text-sm">
-                                        <tr>
-                                            <th className="p-3">ID</th>
-                                            <th className="p-3">Title</th>
-                                            <th className="p-3">Status</th>
-                                            <th className="p-3">Action</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {allTickets.map(t => (
-                                            <tr key={t.ticket_id} className="border-b border-slate-50 hover:bg-slate-50">
-                                                <td className="p-3 font-medium">#{t.ticket_id}</td>
-                                                <td className="p-3">{t.title}</td>
-                                                <td className="p-3">
-                                                    <span className="px-2 py-1 rounded-full text-[10px] font-bold uppercase bg-slate-100 text-slate-600">
-                                                        {t.status}
-                                                    </span>
-                                                </td>
-                                                <td className="p-3">
-                                                    <button 
-                                                        onClick={() => { setSelectedTicket(t); setResolveText(t.solution_description || ''); }}
-                                                        className="text-primary font-bold text-sm hover:underline"
-                                                    >
-                                                        Manage
-                                                    </button>
-                                                </td>
-                                            </tr>
-                                        ))}
-                                    </tbody>
-                                </table>
-                            </div>
+                    <div className="flex flex-col gap-6">
+                        {/* SUB-TABS for Tickets */}
+                        <div className="flex gap-4">
+                            <button 
+                                onClick={() => setTicketTab('queue')}
+                                className={`px-6 py-2 rounded-full font-bold transition-all ${ticketTab === 'queue' ? 'bg-primary text-white shadow-lg' : 'bg-white text-slate-500 border border-slate-200 hover:bg-slate-50'}`}
+                            >
+                                Ticket Queue
+                            </button>
+                            <button 
+                                onClick={() => setTicketTab('resolved')}
+                                className={`px-6 py-2 rounded-full font-bold transition-all ${ticketTab === 'resolved' ? 'bg-primary text-white shadow-lg' : 'bg-white text-slate-500 border border-slate-200 hover:bg-slate-50'}`}
+                            >
+                                Resolved Tickets
+                            </button>
                         </div>
 
-                        <div className="bg-white p-6 rounded-3xl shadow border border-slate-100 h-fit sticky top-24">
-                            <h3 className="text-xl font-bold mb-6 flex items-center gap-2">
-                                <TicketCheck size={20} className="text-primary"/> Resolve Ticket
-                            </h3>
-                            {selectedTicket ? (
-                                <div className="space-y-4">
-                                    <div className="p-3 bg-slate-50 rounded-xl border text-sm mb-4">
-                                        <span className="text-slate-400">Resolving Ticket:</span> <span className="font-bold">#{selectedTicket.ticket_id}</span>
-                                    </div>
-                                    <select className={inputClass} value={status} onChange={e => setStatus(e.target.value)}>
-                                        <option value="assigned">Assigned</option>
-                                        <option value="in-process">In Process</option>
-                                        <option value="completed">Completed</option>
-                                    </select>
-                                    <textarea 
-                                        className={`${inputClass} w-full`} 
-                                        placeholder="Enter solution description..." 
-                                        rows="4"
-                                        value={resolveText}
-                                        onChange={e => setResolveText(e.target.value)}
-                                    />
-                                    <button onClick={handleResolveTicket} className="w-full bg-primary text-white p-3 rounded-xl font-bold hover:opacity-90 shadow-lg">
-                                        Update Status
-                                    </button>
+                        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                            {/* LEFT COLUMN: TABLE */}
+                            <div className="lg:col-span-2 bg-white p-6 rounded-3xl shadow border border-slate-100">
+                                <h3 className="text-xl font-bold mb-6 capitalize">{ticketTab} Tickets</h3>
+                                <div className="overflow-x-auto">
+                                    <table className="w-full text-left">
+                                        <thead className="bg-slate-50 text-slate-500 text-sm">
+                                            <tr>
+                                                <th className="p-3">ID</th>
+                                                <th className="p-3">Title</th>
+                                                <th className="p-3">Status</th>
+                                                <th className="p-3">Action</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {allTickets
+                                                .filter(t => ticketTab === 'queue' ? t.status !== 'completed' : t.status === 'completed')
+                                                .map(t => (
+                                                    <tr key={t.ticket_id} className="border-b border-slate-50 hover:bg-slate-50">
+                                                        <td className="p-3 font-medium">#{t.ticket_id}</td>
+                                                        <td className="p-3">{t.title}</td>
+                                                        <td className="p-3">
+                                                            <span className={`px-2 py-1 rounded-full text-[10px] font-bold uppercase ${t.status === 'completed' ? 'bg-green-100 text-green-600' : 'bg-slate-100 text-slate-600'}`}>
+                                                                {t.status}
+                                                            </span>
+                                                        </td>
+                                                        <td className="p-3">
+                                                            <button 
+                                                                onClick={() => { setSelectedTicket(t); setTicketViewMode('details'); }}
+                                                                className="text-primary font-bold text-sm hover:underline"
+                                                            >
+                                                                Manage
+                                                            </button>
+                                                        </td>
+                                                    </tr>
+                                                ))}
+                                        </tbody>
+                                    </table>
                                 </div>
+                            </div>
+
+                            {/* RIGHT COLUMN: INTERACTIVE PANEL */}
+                            <div className="bg-white p-6 rounded-3xl shadow border border-slate-100 h-fit sticky top-24">
+                                <h3 className="text-xl font-bold mb-6 flex items-center gap-2">
+                                    <TicketCheck size={20} className="text-primary"/> Ticket Details
+                                </h3>
+
+                                {selectedTicket ? (
+                                    <div className="space-y-6">
+                                        {/* TICKET INFO CARD - Always Visible */}
+                                        <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100 space-y-3 text-sm">
+                                            <div className="flex justify-between border-b pb-2">
+                                                <span className="text-slate-400">Ticket ID:</span>
+                                                <span className="font-bold">#{selectedTicket.ticket_id}</span>
+                                            </div>
+                                            <div className="flex justify-between border-b pb-2">
+                                                <span className="text-slate-400">Category:</span>
+                                                <span className="font-semibold">{selectedTicket.category}</span>
+                                            </div>
+                                            <div className="flex justify-between border-b pb-2">
+                                                <span className="text-slate-400">Status:</span>
+                                                <span className="font-bold uppercase text-xs text-primary">{selectedTicket.status}</span>
+                                            </div>
+                                            <div className="pt-2">
+                                                <span className="text-slate-400 block mb-1">Created By:</span>
+                                                <div className="flex flex-col">
+                                                    <span className="font-medium block text-slate-800">
+                                                        {selectedTicket.generated_by}
+                                                    </span>
+                                                    <span className="text-xs text-slate-500 truncate">
+                                                        {selectedTicket.generated_by_email || 'No email provided'}
+                                                    </span>
+                                                </div>
+                                            </div>
+                                            <div className="pt-2">
+                                                <span className="text-slate-400 block mb-1">Issue:</span>
+                                                <p className="text-slate-700 italic leading-relaxed">"{selectedTicket.description}"</p>
+                                            </div>
+                                        </div>
+
+                                        {/* CONDITIONAL ACTION AREA */}
+                                        {ticketViewMode === 'details' ? (
+                                            <div className="pt-4">
+                                                {selectedTicket.status === 'assigned' && (
+                                                    <button 
+                                                        onClick={() => updateTicketStatus('in-process')}
+                                                        className="w-full bg-primary text-white p-3 rounded-xl font-bold hover:opacity-90 shadow-lg transition-all"
+                                                    >
+                                                        Accept Ticket / Take Job
+                                                    </button>
+                                                )}
+
+                                                {selectedTicket.status === 'in-process' && (
+                                                    <button 
+                                                        onClick={() => setTicketViewMode('resolve')}
+                                                        className="w-full bg-primary text-white p-3 rounded-xl font-bold hover:opacity-90 shadow-lg transition-all"
+                                                    >
+                                                        Submit Solution/Remarks
+                                                    </button>
+                                                )}
+
+                                                {selectedTicket.status === 'completed' && (
+                                                    <div className="p-3 bg-green-50 text-green-600 text-center rounded-xl text-sm font-bold border border-green-100">
+                                                        This ticket is already resolved.
+                                                    </div>
+                                                )}
+                                            </div>
+                                        ) : (
+                                            /* RESOLUTION INPUT AREA */
+                                            <div className="space-y-4 pt-4 animate-in fade-in slide-in-from-right-4">
+                                                <button 
+                                                    onClick={() => setTicketViewMode('details')}
+                                                    className="flex items-center gap-1 text-slate-400 hover:text-slate-600 text-xs font-bold transition-all"
+                                                >
+                                                    ← Back to Details
+                                                </button>
+                                                <textarea 
+                                                    className={`${inputClass} w-full`} 
+                                                    placeholder="Describe the solution provided to the user..." 
+                                                    rows="5"
+                                                    value={resolveText}
+                                                    onChange={e => setResolveText(e.target.value)}
+                                                />
+                                                <button 
+                                                    onClick={() => {
+                                                        if(!resolveText) return alert("Please enter a solution description");
+                                                        updateTicketStatus('completed', resolveText);
+                                                    }} 
+                                                    className="w-full bg-green-600 text-white p-3 rounded-xl font-bold hover:bg-green-700 shadow-lg transition-all"
+                                                >
+                                                    Complete Ticket
+                                                </button>
+                                            </div>
+                                        )}
+                                    </div>
                                 ) : (
                                     <div className="text-center py-10 text-slate-400 italic">
-                                        Select a ticket from the list to resolve it.
+                                        Select a ticket from the list to manage it.
                                     </div>
                                 )}
+                            </div>
                         </div>
                     </div>
                 ) : (
@@ -250,15 +378,154 @@ export default function AdminDashboard() {
                                 {tab === 'department' && (
                                     <>
                                         <input className={inputClass} placeholder="Department Name" onChange={e => setForm({...form, name: e.target.value})} />
-                                        <input type="number" className={inputClass} placeholder="University ID" onChange={e => setForm({...form, university_id: parseInt(e.target.value)})} />
+                                        <select 
+                                            className={inputClass} 
+                                            defaultValue="" 
+                                            onChange={e => {
+                                                const uniId = parseInt(e.target.value);
+                                                setForm({ ...form, university_id: uniId });
+                                            }}
+                                        >
+                                            <option value="" disabled>Select University</option>
+                                            {universities.map(uni => (
+                                                <option key={uni.university_id} value={uni.university_id}>
+                                                    {uni.name}
+                                                </option>
+                                            ))}
+                                        </select>
                                     </>
                                 )}
 
                                 {tab === 'courses' && (
                                     <>
                                         <input className={inputClass} placeholder="Course Name" onChange={e => setForm({...form, name: e.target.value})} />
-                                        <input type="number" className={inputClass} placeholder="University ID" onChange={e => setForm({...form, university_id: parseInt(e.target.value)})} />
+                                        
+                                        <select 
+                                            className={inputClass} 
+                                            defaultValue="" 
+                                            onChange={e => {
+                                                const uniId = parseInt(e.target.value);
+                                                setForm({ ...form, university_id: uniId });
+                                                fetchDepartmentsByUni(uniId);
+                                            }}
+                                        >
+                                            <option value="" disabled>Select University</option>
+                                            {universities.map(uni => (
+                                                <option key={uni.university_id} value={uni.university_id}>
+                                                    {uni.name}
+                                                </option>
+                                            ))}
+                                        </select>
+                                        
                                         <input type="number" className={inputClass} placeholder="Year" onChange={e => setForm({...form, year: parseInt(e.target.value)})} />
+
+                                        <div className="col-span-2 relative">
+                                            <label className="text-sm text-slate-600 mb-1 block">Select Departments</label>
+
+                                            {/* Trigger button */}
+                                            <button
+                                                type="button"
+                                                onClick={() => setDeptDropdownOpen(prev => !prev)}
+                                                className={`${inputClass} w-full text-left flex justify-between items-center bg-white`}
+                                            >
+                                                <span className="truncate text-sm text-slate-700">
+                                                    {/* CHANGED: department_ids -> departments */}
+                                                    {form.departments?.length
+                                                        ? `${form.departments.length} department(s) selected`
+                                                        : 'Select departments...'}
+                                                </span>
+                                                <span className="ml-2 text-slate-400 text-xs">{deptDropdownOpen ? '▲' : '▼'}</span>
+                                            </button>
+
+                                            {/* Selected department tags */}
+                                            {/* CHANGED: department_ids -> departments */}
+                                            {form.departments?.length > 0 && (
+                                                <div className="flex flex-wrap gap-2 mt-2">
+                                                    {form.departments.map(id => {
+                                                        const dept = departments.find(d => d.department_id === id);
+                                                        return (
+                                                            <span key={id} className="flex items-center gap-1 px-3 py-1 bg-primary/10 text-primary text-xs font-semibold rounded-full">
+                                                                {dept?.name ?? `Dept #${id}`}
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={() => setForm({
+                                                                        ...form,
+                                                                        // CHANGED: department_ids -> departments
+                                                                        departments: form.departments.filter(d => d !== id)
+                                                                    })}
+                                                                    className="ml-1 hover:text-red-500 font-bold"
+                                                                >x</button>
+                                                            </span>
+                                                        );
+                                                    })}
+                                                </div>
+                                            )}
+
+                                            {/* Dropdown panel */}
+                                            {deptDropdownOpen && (
+                                                <div className="absolute z-50 mt-1 w-full bg-white border border-slate-200 rounded-xl shadow-lg max-h-64 flex flex-col">
+                                                    {/* Search */}
+                                                    <div className="p-2 border-b border-slate-100">
+                                                        <input
+                                                            className="w-full p-2 text-sm border rounded-lg outline-none focus:ring-2 ring-primary"
+                                                            placeholder="Search departments..."
+                                                            value={deptSearch}
+                                                            onChange={e => setDeptSearch(e.target.value)}
+                                                        />
+                                                    </div>
+
+                                                    {/* Department list */}
+                                                    <div className="overflow-y-auto flex-1">
+                                                        {departments
+                                                            .filter(dept => dept.name.toLowerCase().includes(deptSearch.toLowerCase()))
+                                                            .map(dept => {
+                                                                const deptId = dept.department_id;
+                                                                // CHANGED: department_ids -> departments
+                                                                const isSelected = (form.departments || []).includes(deptId);
+                                                                return (
+                                                                    <label
+                                                                        key={deptId}
+                                                                        className="flex items-center gap-3 px-4 py-2 hover:bg-slate-50 cursor-pointer text-sm"
+                                                                    >
+                                                                        <input
+                                                                            type="checkbox"
+                                                                            checked={isSelected}
+                                                                            onChange={() => {
+                                                                                // CHANGED: department_ids -> departments
+                                                                                const current = form.departments || [];
+                                                                                const updated = isSelected
+                                                                                    ? current.filter(d => d !== deptId)
+                                                                                    : [...current, deptId];
+                                                                                setForm({ ...form, departments: updated });
+                                                                            }}
+                                                                            className="accent-primary"
+                                                                        />
+                                                                        <span>{dept.name}</span>
+                                                                    </label>
+                                                                );
+                                                            })}
+                                                        {departments.length === 0 && (
+                                                            <div className="p-4 text-center text-xs text-slate-400 italic">
+                                                                Please enter a valid University ID to load departments.
+                                                            </div>
+                                                        )}
+                                                    </div>
+
+                                                    {/* Footer */}
+                                                    <div className="p-2 border-t border-slate-100 flex justify-between items-center text-xs text-slate-400">
+                                                        {/* CHANGED: department_ids -> departments */}
+                                                        <span>{form.departments?.length || 0} selected</span>
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => setDeptDropdownOpen(false)}
+                                                            className="text-primary font-bold hover:underline"
+                                                        >
+                                                            Done
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            )}
+                                        </div>
                                     </>
                                 )}
 
@@ -273,7 +540,6 @@ export default function AdminDashboard() {
                                             <option value="fall">Fall</option>
                                             <option value="winter">Winter</option>
                                         </select>
-                                        <input type="number" className={inputClass} placeholder="Course ID" onChange={e => setForm({...form, course_id: parseInt(e.target.value)})} />
 
                                         <select
                                             className={inputClass}
@@ -288,7 +554,41 @@ export default function AdminDashboard() {
                                             ))}
                                         </select>
 
-                                        <input type="number" className={inputClass} placeholder="University ID" onChange={e => setForm({...form, university_id: parseInt(e.target.value)})} />
+                                        <select 
+                                            className={inputClass} 
+                                            defaultValue="" 
+                                            onChange={e => {
+                                                const uniId = parseInt(e.target.value);
+                                                // 1. Update University ID
+                                                // 2. Reset course_id to empty because the previous course doesn't belong to this uni
+                                                setForm({ ...form, university_id: uniId, course_id: "" }); 
+                                                // 3. Fetch courses for this specific university
+                                                fetchCoursesByUni(uniId);
+                                            }}
+                                        >
+                                            <option value="" disabled>Select University</option>
+                                            {universities.map(uni => (
+                                                <option key={uni.university_id} value={uni.university_id}>
+                                                    {uni.name}
+                                                </option>
+                                            ))}
+                                        </select>
+
+                                        <select 
+                                            className={inputClass} 
+                                            value={form.course_id || ""} 
+                                            onChange={e => setForm({...form, course_id: parseInt(e.target.value)})}
+                                        >
+                                            <option value="" disabled>Select Course</option>
+                                            {courses.map(course => (
+                                                <option key={course.course_id} value={course.course_id}>
+                                                    {course.name}
+                                                </option>
+                                            ))}
+                                            {courses.length === 0 && universities.length > 0 && (
+                                                <option disabled>No courses found for this university</option>
+                                            )}
+                                        </select>
 
                                         {/* ======= NEW: Book Checkbox Dropdown ======= */}
                                         <div className="col-span-2 relative">
@@ -407,7 +707,7 @@ export default function AdminDashboard() {
                                 Save Record
                             </button>
                         </div>
-
+                        {/*TABLES*/}
                         {tab === 'books' && (
                             <AdminTable
                                 fetchUrl="/fetchBooks"
@@ -441,7 +741,7 @@ export default function AdminDashboard() {
                             <AdminTable
                                 fetchUrl="/fetchDepartments" 
                                 deleteUrl="/removeDepartment"
-                                columns={[{ key: 'department_id', label: 'ID' }, { key: 'name', label: 'Department' }, { key: 'university_id', label: 'University ID' }]}
+                                columns={[{ key: 'department_id', label: 'ID' }, { key: 'name', label: 'Department' }, { key: 'university_name', label: 'University Name' }]}
                             />
                         )}
 

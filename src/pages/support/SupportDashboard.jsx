@@ -138,7 +138,7 @@ export default function SupportDashboard() {
                     onClick={() => setView('orders')} 
                     className={`flex items-center gap-3 p-3 rounded-xl text-left font-bold transition-all ${view==='orders' ? 'bg-white shadow-sm text-primary' : 'text-slate-600 hover:bg-slate-200'}`}
                 >
-                    <Package size={20}/> Order Mgmt
+                    <Package size={20}/> Orders
                 </button>
                 <button 
                     onClick={() => setView('tickets')} 
@@ -206,7 +206,7 @@ export default function SupportDashboard() {
                                                             </select>
                                                         </div>
 
-                                                        {/* Return Button
+
                                                         <button 
                                                             onClick={() => processReturn(o.order_id)} 
                                                             disabled={o.status === 'canceled'}
@@ -214,7 +214,7 @@ export default function SupportDashboard() {
                                                             title="Process Return"
                                                         >
                                                             <RotateCcw size={20}/>
-                                                        </button> */}
+                                                        </button>
                                                     </td>
                                                 </tr>
                                             ))

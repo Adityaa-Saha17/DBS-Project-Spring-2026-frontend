@@ -19,7 +19,6 @@ export default function SupportDashboard() {
         { value: 'processed', label: 'Processed' },
         { value: 'awaiting_shipping', label: 'Awaiting Shipping' },
         { value: 'shipped', label: 'Shipped' },
-        { value: 'canceled', label: 'Canceled' },
         // { value: 'returned', label: 'Returned' },
     ];
 

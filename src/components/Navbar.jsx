@@ -31,8 +31,6 @@ export default function Navbar() {
                 {user?.role === 'admin' && <Link to="/admin" className="text-slate-600 hover:text-primary font-medium">Admin Panel</Link>}
                 {user?.role === 'admin' && <Link to="/admin/users" className="text-slate-600 hover:text-primary font-medium">Users</Link>}
                 
-                {user?.role === 'superadmin' && <Link to="/superadmin" className="text-slate-600 hover:text-primary font-medium">Staff Mgmt</Link>}
-                
                 {/* Only show settings and logout if a user is logged in */}
                 {user && (
                     <>

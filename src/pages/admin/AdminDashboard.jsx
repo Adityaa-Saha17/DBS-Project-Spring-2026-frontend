@@ -553,15 +553,12 @@ export default function AdminDashboard() {
                                             ))}
                                         </select>
 
-                                        <select 
+                                        <select
                                             className={inputClass} 
                                             defaultValue="" 
                                             onChange={e => {
                                                 const uniId = parseInt(e.target.value);
-                                                // 1. Update University ID
-                                                // 2. Reset course_id to empty because the previous course doesn't belong to this uni
                                                 setForm({ ...form, university_id: uniId, course_id: "" }); 
-                                                // 3. Fetch courses for this specific university
                                                 fetchCoursesByUni(uniId);
                                             }}
                                         >

@@ -153,7 +153,7 @@ export default function UserManagement() {
                         <select 
                             className={`${inputClass} bg-white`} 
                             defaultValue=""
-                            onChange={e => setForm({...form, department_id: e.target, value})}
+                            onChange={e => setForm({...form, department_id: e.target.value})}
                         >
                             <option value="" disabled>Select Department</option>
                             {departments.map(dept => (
